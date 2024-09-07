@@ -1,6 +1,5 @@
-import GoogleMap from "@/components/GoogleMap";
 import LineGraph from "@/components/LineGraph";
-import Image from "next/image";
+import LocationMap from "@/components/LocationMap";
 
 export default function Application() {
   return (
@@ -17,7 +16,7 @@ export default function Application() {
             <LineGraph name={"Accelerometer Graph"} datas={[]} />
           </div>
         </div>
-        <GoogleMap />
+        <LocationMap />
       </div>
     </div>
   );
