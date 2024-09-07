@@ -21,7 +21,7 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 export default function LineGraph({
@@ -67,31 +67,31 @@ export default function LineGraph({
   }, []);
 
   return (
-    <div className="bg-primary-white p-6 rounded-xl h-full">
+    <div className="h-full rounded-xl bg-primary-white p-6 duration-300 ease-in hover:scale-105 active:scale-100">
       {normalImage && isOpen ? (
         <div
-          className="flex flex-col size-full justify-center items-center"
+          className="flex size-full flex-col items-center justify-center"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <div className="text-hl-primary-blue font-bold text-lg">{name}</div>
+          <div className="text-lg font-bold text-hl-primary-blue">{name}</div>
           <Line data={data} options={options} />
         </div>
       ) : (
         <div className="size-full" onClick={() => setIsOpen(!isOpen)}>
           {normalImage ? (
-            <div className="flex flex-col size-full justify-center items-center gap-y-4">
+            <div className="flex size-full flex-col items-center justify-center gap-y-4">
               <Image
                 src={isNormal ? normalImage : alarmImage}
                 alt={"test"}
                 width={200}
                 height={200}
               />
-              <div className="text-black font-bold text-3xl">
+              <div className="text-3xl font-bold text-black">
                 {isNormal ? "Normal" : "Falling"}
               </div>
             </div>
           ) : (
-            <div className="flex justify-center items-center size-full">
+            <div className="flex size-full items-center justify-center">
               <CircularProgress />
             </div>
           )}

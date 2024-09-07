@@ -12,7 +12,7 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         "primary-white": "#F5EDED",
-        "hl-primary-blue": "#4B70F5"
+        "hl-primary-blue": "#4B70F5",
       },
     },
   },

@@ -3,12 +3,12 @@ import LocationMap from "@/components/LocationMap";
 
 export default function Application() {
   return (
-    <div className="flex flex-col justify-center items-center p-12 gap-y-6 h-screen">
-      <div className="font-bold text-2xl">
+    <div className="flex h-screen flex-col items-center justify-center gap-y-6 p-12">
+      <div className="text-2xl font-bold">
         Smart Notification System for Aging Society
       </div>
-      <div className="flex flex-row size-full gap-x-12">
-        <div className="flex flex-col w-1/2 h-full">
+      <div className="flex size-full flex-row gap-x-12">
+        <div className="flex h-[97%] w-1/2 flex-col">
           <div className="h-1/2 pb-3">
             <LineGraph name={"Gyrometer Graph"} datas={[]} />
           </div>
