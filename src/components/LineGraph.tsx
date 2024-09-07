@@ -32,7 +32,7 @@ export default function LineGraph({
   datas: string[];
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isNormal, setIsNormal] = useState<boolean>(false);
+  const [isNormal, setIsNormal] = useState<boolean>(true);
   const [normalImage, setNormalImage] = useState<string>("");
   const [alarmImage, setAlarmImage] = useState<string>("");
 
@@ -68,11 +68,6 @@ export default function LineGraph({
 
   return (
     <div className="bg-primary-white p-6 rounded-xl h-full">
-      {!normalImage && (
-        <div className="flex h-[830px] w-[650px] flex-col items-center justify-center rounded-[10px] bg-white">
-          <CircularProgress />
-        </div>
-      )}
       {normalImage && isOpen ? (
         <div
           className="flex flex-col size-full justify-center items-center"
@@ -82,19 +77,24 @@ export default function LineGraph({
           <Line data={data} options={options} />
         </div>
       ) : (
-        <div
-          className="flex flex-col size-full justify-center items-center gap-y-4"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <Image
-            src={isNormal ? normalImage : alarmImage}
-            alt={"test"}
-            width={200}
-            height={200}
-          />
-          <div className="text-black font-bold text-3xl">
-            {isNormal ? "Normal" : "Falling"}
-          </div>
+        <div className="size-full" onClick={() => setIsOpen(!isOpen)}>
+          {normalImage ? (
+            <div className="flex flex-col size-full justify-center items-center gap-y-4">
+              <Image
+                src={isNormal ? normalImage : alarmImage}
+                alt={"test"}
+                width={200}
+                height={200}
+              />
+              <div className="text-black font-bold text-3xl">
+                {isNormal ? "Normal" : "Falling"}
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center items-center size-full">
+              <CircularProgress />
+            </div>
+          )}
         </div>
       )}
     </div>
