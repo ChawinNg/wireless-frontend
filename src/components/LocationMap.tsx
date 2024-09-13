@@ -1,14 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { io } from "socket.io-client";
 
 export default function LocationMap() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [message, setMessage] = useState("");
 
   const center = { lat: 37.7749, lng: -122.4194 };
   const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const mapSrc = `https://www.google.com/maps/embed/v1/place?key=${googleApiKey}&q=${center.lat},${center.lng}`;
+
+  useEffect(() => {
+    const socket = io("http://localhost:8000");
+
+    socket.on("connect", () => {
+      console.log("Connected to server");
+    });
+
+    socket.on("mqtt-message", (msg) => {
+      console.log(msg);
+      setMessage(msg);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <div

@@ -13,6 +13,8 @@ import {
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import CircularProgress from "@mui/material/CircularProgress";
+import mqtt, { IClientOptions } from "mqtt";
+import { io } from "socket.io-client";
 
 ChartJS.register(
   CategoryScale,
@@ -35,6 +37,7 @@ export default function LineGraph({
   const [isNormal, setIsNormal] = useState<boolean>(true);
   const [normalImage, setNormalImage] = useState<string>("");
   const [alarmImage, setAlarmImage] = useState<string>("");
+  const [message, setMessage] = useState("");
 
   const data = {
     labels: ["January", "February", "March", "April", "May", "May"],
@@ -64,6 +67,23 @@ export default function LineGraph({
       setNormalImage("./speed_normal.svg");
       setAlarmImage("./speed_fast.svg");
     }
+  }, []);
+
+  useEffect(() => {
+    const socket = io("http://localhost:8000");
+
+    socket.on("connect", () => {
+      console.log("Connected to server");
+    });
+
+    socket.on("mqtt-message", (msg) => {
+      console.log(msg);
+      setMessage(msg);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   return (
