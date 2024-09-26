@@ -5,14 +5,28 @@ import Image from "next/image";
 import { io } from "socket.io-client";
 
 export default function LocationMap() {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [message, setMessage] = useState("");
-
-  const center = { lat: 37.7749, lng: -122.4194 };
   const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const mapSrc = `https://www.google.com/maps/embed/v1/place?key=${googleApiKey}&q=${center.lat},${center.lng}`;
+
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [mapSrc, setMapSrc] = useState(
+    `https://www.google.com/maps/embed/v1/place?key=${googleApiKey}&q=0,0`,
+  );
 
   useEffect(() => {
+    let latitude = 0.0;
+    let longitude = 0.0;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+        },
+        (error) => {
+          console.error("Error getting location: ", error);
+        },
+      );
+    }
+
     const socket = io("http://localhost:8000");
 
     socket.on("connect", () => {
@@ -20,8 +34,13 @@ export default function LocationMap() {
     });
 
     socket.on("mqtt-message", (msg) => {
-      console.log(msg);
-      setMessage(msg);
+      if (msg.topic == "gps") {
+        setMapSrc(
+          `https://www.google.com/maps/embed/v1/directions?key=${googleApiKey}&origin=${latitude},${longitude}&destination=${msg.message.latitude},${msg.message.longitude}`,
+        );
+
+        console.log(mapSrc);
+      }
     });
 
     return () => {

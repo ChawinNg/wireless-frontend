@@ -10,10 +10,10 @@ export default function Application() {
       <div className="flex size-full flex-row gap-x-12">
         <div className="flex h-[97%] w-1/2 flex-col">
           <div className="h-1/2 pb-3">
-            <LineGraph name={"Gyrometer Graph"} datas={[]} />
+            <LineGraph name={"Gyrometer Graph"} />
           </div>
           <div className="h-1/2 pt-3">
-            <LineGraph name={"Accelerometer Graph"} datas={[]} />
+            <LineGraph name={"Accelerometer Graph"} />
           </div>
         </div>
         <LocationMap />

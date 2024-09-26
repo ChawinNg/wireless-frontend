@@ -1,14 +1,13 @@
 "use client";
-import { Line } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
   Title,
   Tooltip,
   Legend,
+  BarElement,
 } from "chart.js";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -19,42 +18,41 @@ import { io } from "socket.io-client";
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
 );
 
-export default function LineGraph({
-  name,
-  datas,
-}: {
-  name: string;
-  datas: string[];
-}) {
+export default function LineGraph({ name }: { name: string }) {
+  const initData = {
+    labels: ["X", "Y", "Z"],
+    datasets: [
+      {
+        data: [0, 0, 0],
+        backgroundColor: "rgb(75, 192, 192)",
+        borderColor: "rgb(75, 192, 192)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isNormal, setIsNormal] = useState<boolean>(true);
   const [normalImage, setNormalImage] = useState<string>("");
   const [alarmImage, setAlarmImage] = useState<string>("");
-  const [message, setMessage] = useState("");
-
-  const data = {
-    labels: ["January", "February", "March", "April", "May", "May"],
-    datasets: [
-      {
-        data: [30, 50, 70, 60, 90, 100],
-        borderColor: "rgba(75, 192, 192, 1)",
-        fill: false,
-      },
-    ],
-  };
+  const [chartDatas, setChartDatas] = useState<any>(initData);
 
   const options = {
     responsive: true,
     plugins: {
       legend: {
-        display: true,
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
       },
     },
   };
@@ -77,8 +75,32 @@ export default function LineGraph({
     });
 
     socket.on("mqtt-message", (msg) => {
-      console.log(msg);
-      setMessage(msg);
+      if (msg.topic == "mpu") {
+        console.log(msg);
+        const chartData = {
+          labels: ["X", "Y", "Z"],
+          datasets: [
+            {
+              data:
+                name == "Gyrometer Graph"
+                  ? [
+                      msg.message.gyroscope.x,
+                      msg.message.gyroscope.y,
+                      msg.message.gyroscope.z,
+                    ]
+                  : [
+                      msg.message.accelerometer.x,
+                      msg.message.accelerometer.y,
+                      msg.message.accelerometer.z,
+                    ],
+              backgroundColor: "rgb(75, 192, 192)",
+              borderColor: "rgb(75, 192, 192)",
+              borderWidth: 1,
+            },
+          ],
+        };
+        setChartDatas(chartData);
+      }
     });
 
     return () => {
@@ -94,7 +116,7 @@ export default function LineGraph({
           onClick={() => setIsOpen(!isOpen)}
         >
           <div className="text-lg font-bold text-hl-primary-blue">{name}</div>
-          <Line data={data} options={options} />
+          <Bar data={chartDatas} options={options} />
         </div>
       ) : (
         <div className="size-full" onClick={() => setIsOpen(!isOpen)}>
