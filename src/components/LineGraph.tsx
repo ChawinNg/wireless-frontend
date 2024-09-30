@@ -1,5 +1,5 @@
 "use client";
-import { Bar } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -8,6 +8,8 @@ import {
   Tooltip,
   Legend,
   BarElement,
+  PointElement,
+  LineElement,
 } from "chart.js";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -18,7 +20,8 @@ import { io } from "socket.io-client";
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
@@ -37,11 +40,23 @@ export default function LineGraph({ name }: { name: string }) {
     ],
   };
 
+  const initData2 = {
+    labels: [],
+    datasets: [
+      {
+        label: "X",
+        data: [],
+        borderColor: "rgba(75,192,192,1)",
+        fill: false,
+      },
+    ],
+  };
+
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isNormal, setIsNormal] = useState<boolean>(true);
   const [normalImage, setNormalImage] = useState<string>("");
   const [alarmImage, setAlarmImage] = useState<string>("");
-  const [chartDatas, setChartDatas] = useState<any>(initData);
+  const [chartDatas, setChartDatas] = useState<any>(initData2);
 
   const options = {
     responsive: true,
@@ -49,10 +64,9 @@ export default function LineGraph({ name }: { name: string }) {
       legend: {
         display: false,
       },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
+      title: {
+        display: true,
+        text: "Line Chart with 3 Lines",
       },
     },
   };
@@ -76,30 +90,41 @@ export default function LineGraph({ name }: { name: string }) {
 
     socket.on("mqtt-message", (msg) => {
       if (msg.topic == "mpu") {
-        console.log(msg);
-        const chartData = {
-          labels: ["X", "Y", "Z"],
+        const now = new Date();
+        const currentTime = now.toLocaleTimeString();
+
+        const gyro_amp = Math.sqrt(
+          msg.message.gyroscope.y * msg.message.gyroscope.y +
+            msg.message.gyroscope.z * msg.message.gyroscope.z,
+        );
+
+        const acc_amp = Math.abs(msg.message.accelerometer.x);
+
+        // console.log(msg);
+        setChartDatas((prevState: any) => ({
+          ...prevState,
+          labels: [...prevState.labels, currentTime],
           datasets: [
             {
-              data:
-                name == "Gyrometer Graph"
-                  ? [
-                      msg.message.gyroscope.x,
-                      msg.message.gyroscope.y,
-                      msg.message.gyroscope.z,
-                    ]
-                  : [
-                      msg.message.accelerometer.x,
-                      msg.message.accelerometer.y,
-                      msg.message.accelerometer.z,
-                    ],
-              backgroundColor: "rgb(75, 192, 192)",
-              borderColor: "rgb(75, 192, 192)",
-              borderWidth: 1,
+              label: name,
+              data: [
+                ...prevState.datasets[0].data,
+                name == "Gyrometer Graph" ? gyro_amp : acc_amp,
+              ],
+              borderColor: "rgba(75,192,192,1)",
+              fill: false,
             },
           ],
-        };
-        setChartDatas(chartData);
+        }));
+      }
+    });
+
+    socket.on("alert", (msg) => {
+      if (msg.message) {
+        setIsNormal(false);
+        setTimeout(() => {
+          setIsNormal(true);
+        }, 10000000);
       }
     });
 
@@ -115,8 +140,18 @@ export default function LineGraph({ name }: { name: string }) {
           className="flex size-full flex-col items-center justify-center"
           onClick={() => setIsOpen(!isOpen)}
         >
-          <div className="text-lg font-bold text-hl-primary-blue">{name}</div>
-          <Bar data={chartDatas} options={options} />
+          <div className="flex flex-row justify-center">
+            <div className="text-lg font-bold text-hl-primary-blue">{name}</div>
+            <button
+              className="right-2 bg-white px-2 py-1 text-black"
+              onClick={() => {
+                setIsNormal(true);
+              }}
+            >
+              clear
+            </button>
+          </div>
+          <Line data={chartDatas} options={options} />
         </div>
       ) : (
         <div className="size-full" onClick={() => setIsOpen(!isOpen)}>
