@@ -7,7 +7,7 @@ import { io } from "socket.io-client";
 export default function LocationMap() {
   const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(true);
   const [mapSrc, setMapSrc] = useState(
     `https://www.google.com/maps/embed/v1/place?key=${googleApiKey}&q=0,0`,
   );
@@ -34,15 +34,15 @@ export default function LocationMap() {
     });
 
     socket.on("mqtt-message", (msg) => {
-      if (msg.topic == "gps") {
-        setMapSrc(
-          `https://www.google.com/maps/embed/v1/directions?key=${googleApiKey}&origin=${latitude},${longitude}&destination=${msg.message.latitude},${msg.message.longitude}`,
-        );
-
-        console.log(mapSrc);
-      }
+      // setTimeout(() => {
+      //   setMapSrc(
+      //     `https://www.google.com/maps/embed/v1/directions?key=${googleApiKey}&origin=${latitude},${longitude}&destination=${msg.message.latitude},${msg.message.longitude}`,
+      //   );
+      // }, 120000);
     });
-
+    setMapSrc(
+      `https://www.google.com/maps/embed/v1/directions?key=${googleApiKey}&origin=${13.736},${100.533283}&destination=${13.736975},${100.533283}`,
+    );
     return () => {
       socket.disconnect();
     };
@@ -52,7 +52,7 @@ export default function LocationMap() {
     <div
       className="h-[97%] w-1/2 rounded-2xl bg-primary-white duration-300 ease-in hover:scale-105 active:scale-100"
       onClick={() => {
-        setIsOpen(!isOpen);
+        setIsOpen(isOpen);
       }}
     >
       {isOpen ? (

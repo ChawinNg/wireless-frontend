@@ -28,18 +28,6 @@ ChartJS.register(
 );
 
 export default function LineGraph({ name }: { name: string }) {
-  const initData = {
-    labels: ["X", "Y", "Z"],
-    datasets: [
-      {
-        data: [0, 0, 0],
-        backgroundColor: "rgb(75, 192, 192)",
-        borderColor: "rgb(75, 192, 192)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
   const initData2 = {
     labels: [],
     datasets: [
@@ -52,12 +40,6 @@ export default function LineGraph({ name }: { name: string }) {
     ],
   };
 
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isNormal, setIsNormal] = useState<boolean>(true);
-  const [normalImage, setNormalImage] = useState<string>("");
-  const [alarmImage, setAlarmImage] = useState<string>("");
-  const [chartDatas, setChartDatas] = useState<any>(initData2);
-
   const options = {
     responsive: true,
     plugins: {
@@ -65,11 +47,31 @@ export default function LineGraph({ name }: { name: string }) {
         display: false,
       },
       title: {
-        display: true,
+        display: false,
         text: "Line Chart with 3 Lines",
       },
     },
   };
+
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isNormal, setIsNormal] = useState<boolean>(true);
+  const [normalImage, setNormalImage] = useState<string>("");
+  const [alarmImage, setAlarmImage] = useState<string>("");
+  const [chartDatas, setChartDatas] = useState<any>(initData2);
+
+  function convertToGMT7(timeStr: string) {
+    const date = new Date(timeStr);
+    const gmt7Date = new Date(date.getTime() + 7 * 60 * 60 * 1000); // Add 7 hours in milliseconds
+
+    const year = gmt7Date.getFullYear();
+    const month = String(gmt7Date.getMonth() + 1).padStart(2, "0"); // Months are zero-indexed
+    const day = String(gmt7Date.getDate()).padStart(2, "0");
+    const hours = String(gmt7Date.getHours()).padStart(2, "0");
+    const minutes = String(gmt7Date.getMinutes()).padStart(2, "0");
+
+    // Return formatted string as "YYYY-MM-DDTHH:MM"
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
 
   useEffect(() => {
     if (name == "Gyrometer Graph") {
@@ -88,37 +90,6 @@ export default function LineGraph({ name }: { name: string }) {
       console.log("Connected to server");
     });
 
-    socket.on("mqtt-message", (msg) => {
-      if (msg.topic == "mpu") {
-        const now = new Date();
-        const currentTime = now.toLocaleTimeString();
-
-        const gyro_amp = Math.sqrt(
-          msg.message.gyroscope.y * msg.message.gyroscope.y +
-            msg.message.gyroscope.z * msg.message.gyroscope.z,
-        );
-
-        const acc_amp = Math.abs(msg.message.accelerometer.x);
-
-        // console.log(msg);
-        setChartDatas((prevState: any) => ({
-          ...prevState,
-          labels: [...prevState.labels, currentTime],
-          datasets: [
-            {
-              label: name,
-              data: [
-                ...prevState.datasets[0].data,
-                name == "Gyrometer Graph" ? gyro_amp : acc_amp,
-              ],
-              borderColor: "rgba(75,192,192,1)",
-              fill: false,
-            },
-          ],
-        }));
-      }
-    });
-
     socket.on("alert", (msg) => {
       if (msg.message) {
         setIsNormal(false);
@@ -133,25 +104,61 @@ export default function LineGraph({ name }: { name: string }) {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8000/${name == "Gyrometer Graph" ? "gyroscope" : "accelerometer"}`,
+        );
+        const data = await response.json();
+        const chartData = {
+          labels: data.map((entry: {}) => convertToGMT7(Object.keys(entry)[0])), // Extracts the time (keys)
+          datasets: [
+            {
+              label: "Magnitude",
+              data: data.map(
+                (entry: { [s: string]: unknown } | ArrayLike<unknown>) =>
+                  Object.values(entry)[0],
+              ), // Extracts the magnitude (values)
+              fill: false,
+              borderColor: "rgba(75, 192, 192, 1)",
+              tension: 0.1,
+            },
+          ],
+        };
+        setChartDatas(chartData); // Assuming result is an array of key-value pairs
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  });
+
   return (
     <div className="h-full rounded-xl bg-primary-white p-6 duration-300 ease-in hover:scale-105 active:scale-100">
-      {normalImage && isOpen ? (
+      {!isOpen ? (
         <div
           className="flex size-full flex-col items-center justify-center"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsOpen(isOpen)}
         >
           <div className="flex flex-row justify-center">
             <div className="text-lg font-bold text-hl-primary-blue">{name}</div>
-            <button
+            {/* <button
               className="right-2 bg-white px-2 py-1 text-black"
               onClick={() => {
                 setIsNormal(true);
               }}
             >
               clear
-            </button>
+            </button> */}
           </div>
-          <Line data={chartDatas} options={options} />
+          {chartDatas ? (
+            <Line data={chartDatas} options={options} />
+          ) : (
+            <div className="flex size-full items-center justify-center">
+              <CircularProgress />
+            </div>
+          )}
         </div>
       ) : (
         <div className="size-full" onClick={() => setIsOpen(!isOpen)}>
